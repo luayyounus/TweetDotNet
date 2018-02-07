@@ -1,0 +1,12 @@
+C:\Users\Luay\Dropbox\401dotNet\Projects\Labs\Week7-Identity\TweetDotNet\TweetDotNet\bin\Debug\netcoreapp2.0\TweetDotNet.deps.json
+C:\Users\Luay\Dropbox\401dotNet\Projects\Labs\Week7-Identity\TweetDotNet\TweetDotNet\bin\Debug\netcoreapp2.0\TweetDotNet.runtimeconfig.json
+C:\Users\Luay\Dropbox\401dotNet\Projects\Labs\Week7-Identity\TweetDotNet\TweetDotNet\bin\Debug\netcoreapp2.0\TweetDotNet.runtimeconfig.dev.json
+C:\Users\Luay\Dropbox\401dotNet\Projects\Labs\Week7-Identity\TweetDotNet\TweetDotNet\bin\Debug\netcoreapp2.0\TweetDotNet.dll
+C:\Users\Luay\Dropbox\401dotNet\Projects\Labs\Week7-Identity\TweetDotNet\TweetDotNet\bin\Debug\netcoreapp2.0\TweetDotNet.pdb
+C:\Users\Luay\Dropbox\401dotNet\Projects\Labs\Week7-Identity\TweetDotNet\TweetDotNet\obj\Debug\netcoreapp2.0\TweetDotNet.csprojResolveAssemblyReference.cache
+C:\Users\Luay\Dropbox\401dotNet\Projects\Labs\Week7-Identity\TweetDotNet\TweetDotNet\obj\Debug\netcoreapp2.0\TweetDotNet.csproj.CoreCompileInputs.cache
+C:\Users\Luay\Dropbox\401dotNet\Projects\Labs\Week7-Identity\TweetDotNet\TweetDotNet\obj\Debug\netcoreapp2.0\UserSecretsAssemblyInfo.cs
+C:\Users\Luay\Dropbox\401dotNet\Projects\Labs\Week7-Identity\TweetDotNet\TweetDotNet\obj\Debug\netcoreapp2.0\TweetDotNet.AssemblyInfoInputs.cache
+C:\Users\Luay\Dropbox\401dotNet\Projects\Labs\Week7-Identity\TweetDotNet\TweetDotNet\obj\Debug\netcoreapp2.0\TweetDotNet.AssemblyInfo.cs
+C:\Users\Luay\Dropbox\401dotNet\Projects\Labs\Week7-Identity\TweetDotNet\TweetDotNet\obj\Debug\netcoreapp2.0\TweetDotNet.dll
+C:\Users\Luay\Dropbox\401dotNet\Projects\Labs\Week7-Identity\TweetDotNet\TweetDotNet\obj\Debug\netcoreapp2.0\TweetDotNet.pdb
