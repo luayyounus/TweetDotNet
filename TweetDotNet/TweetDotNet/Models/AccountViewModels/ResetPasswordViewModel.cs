@@ -8,6 +8,8 @@ namespace TweetDotNet.Models.AccountViewModels
 {
     public class ResetPasswordViewModel
     {
+        // Password property requires the user with Password, Data type setup to be black dotted for secure typing 
+
         [Required]
         [EmailAddress]
         public string Email { get; set; }

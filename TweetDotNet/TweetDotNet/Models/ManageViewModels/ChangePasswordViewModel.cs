@@ -8,6 +8,7 @@ namespace TweetDotNet.Models.ManageViewModels
 {
     public class ChangePasswordViewModel
     {
+
         [Required]
         [DataType(DataType.Password)]
         [Display(Name = "Current password")]
