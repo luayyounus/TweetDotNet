@@ -16,15 +16,21 @@ using TweetDotNet.Services;
 
 namespace TweetDotNet.Controllers
 {
+    // Require this class to use authentication to access data
     [Authorize]
     [Route("[controller]/[action]")]
     public class AccountController : Controller
     {
+        // Injecting User manager and Sign in APIs to be used in the Account controller
+        // User Manager and Sign in Manager classes are provided by Identity Framework 
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
+
+        // Interfaces injections for email info and logging users activity
         private readonly IEmailSender _emailSender;
         private readonly ILogger _logger;
 
+        // main constructor initializing the injected dependencies
         public AccountController(
             UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser> signInManager,
@@ -37,9 +43,16 @@ namespace TweetDotNet.Controllers
             _logger = logger;
         }
 
+        // Attribute to pass in data in one http request
+        // Error resets to null when another request is made that doesn't specify the string value
         [TempData]
         public string ErrorMessage { get; set; }
 
+        /// <summary>
+        ///  Default Login action that uses Identity 
+        /// </summary>
+        /// <param name="returnUrl">overload to return to same page before logging in</param>
+        /// <returns></returns>
         [HttpGet]
         [AllowAnonymous]
         public async Task<IActionResult> Login(string returnUrl = null)
@@ -51,26 +64,47 @@ namespace TweetDotNet.Controllers
             return View();
         }
 
+        /// <summary>
+        /// Default Login mechanism provided by Identity framework with two overloads
+        /// </summary>
+        /// <param name="model">View model for login options</param>
+        /// <param name="returnUrl">Return url after logging in</param>
+        /// <returns></returns>
         [HttpPost]
         [AllowAnonymous]
+        
+        // Validating the source of login by storing a token in cookies to prevent cyber/unauthorized attacks from data stealth.
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(LoginViewModel model, string returnUrl = null)
         {
+            // Passing in the return url between view to keep persistency after login
             ViewData["ReturnUrl"] = returnUrl;
+
+            // Checking if user has filled the form using the Model
             if (ModelState.IsValid)
             {
                 // This doesn't count login failures towards account lockout
                 // To enable password failures to trigger account lockout, set lockoutOnFailure: true
                 var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, lockoutOnFailure: false);
+
+                // If user has signed in successfully, the succeeded flag will be true
                 if (result.Succeeded)
                 {
+                    // Logging the user login details for future backlog reference
                     _logger.LogInformation("User logged in.");
+
+                    // return to the view with the url specified earlier after login
                     return RedirectToLocal(returnUrl);
                 }
+
+                // checking if the user requires 2 factor authentication for login
                 if (result.RequiresTwoFactor)
                 {
+                    // Redirecting with action to the specifid controller using the full assembly directory with (nameof)
                     return RedirectToAction(nameof(LoginWith2fa), new { returnUrl, model.RememberMe });
                 }
+
+                // checking if user has done enough attempts and blocks their account
                 if (result.IsLockedOut)
                 {
                     _logger.LogWarning("User account locked out.");
@@ -78,6 +112,7 @@ namespace TweetDotNet.Controllers
                 }
                 else
                 {
+                    // return the current model if the user has made an invalid login attempt
                     ModelState.AddModelError(string.Empty, "Invalid login attempt.");
                     return View(model);
                 }
@@ -87,6 +122,12 @@ namespace TweetDotNet.Controllers
             return View(model);
         }
 
+        /// <summary>
+        /// Login with Two factor authentication
+        /// </summary>
+        /// <param name="rememberMe">Optional remember me option to remember user</param>
+        /// <param name="returnUrl">Return page url after login with 2 factor auth</param>
+        /// <returns></returns>
         [HttpGet]
         [AllowAnonymous]
         public async Task<IActionResult> LoginWith2fa(bool rememberMe, string returnUrl = null)
@@ -99,12 +140,20 @@ namespace TweetDotNet.Controllers
                 throw new ApplicationException($"Unable to load two-factor authentication user.");
             }
 
+            // Creating the new view model with login info and return back to the view
             var model = new LoginWith2faViewModel { RememberMe = rememberMe };
             ViewData["ReturnUrl"] = returnUrl;
 
             return View(model);
         }
 
+        /// <summary>
+        /// Login with Two factor authentication, takes in different view model
+        /// </summary>
+        /// <param name="model">Two factor auth view model</param>
+        /// <param name="rememberMe">Optional flag to remember logged in user</param>
+        /// <param name="returnUrl">Return url after logging in</param>
+        /// <returns></returns>
         [HttpPost]
         [AllowAnonymous]
         [ValidateAntiForgeryToken]
@@ -121,8 +170,10 @@ namespace TweetDotNet.Controllers
                 throw new ApplicationException($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
             }
 
+            // replacing the 2fa space with '-' because that's how it's generated usually on the screen
             var authenticatorCode = model.TwoFactorCode.Replace(" ", string.Empty).Replace("-", string.Empty);
 
+            // Getting result by passing in a 2fa, remember me option
             var result = await _signInManager.TwoFactorAuthenticatorSignInAsync(authenticatorCode, rememberMe, model.RememberMachine);
 
             if (result.Succeeded)
@@ -159,6 +210,12 @@ namespace TweetDotNet.Controllers
             return View();
         }
 
+        /// <summary>
+        /// This action is used when user forgets user/password and needs to recover their profile
+        /// </summary>
+        /// <param name="model">User model with Recovery code retrieved by Email or Sms</param>
+        /// <param name="returnUrl">Url return to page if recovery succeeded</param>
+        /// <returns></returns>
         [HttpPost]
         [AllowAnonymous]
         [ValidateAntiForgeryToken]
@@ -177,6 +234,7 @@ namespace TweetDotNet.Controllers
 
             var recoveryCode = model.RecoveryCode.Replace(" ", string.Empty);
 
+            //Checking if the recovery code
             var result = await _signInManager.TwoFactorRecoveryCodeSignInAsync(recoveryCode);
 
             if (result.Succeeded)
@@ -197,6 +255,10 @@ namespace TweetDotNet.Controllers
             }
         }
 
+        /// <summary>
+        /// This is called when the user has been locked out of their account when failed recovery
+        /// </summary>
+        /// <returns>Return view representing account lock out</returns>
         [HttpGet]
         [AllowAnonymous]
         public IActionResult Lockout()
@@ -204,6 +266,11 @@ namespace TweetDotNet.Controllers
             return View();
         }
 
+        /// <summary>
+        /// This action is called to register new user
+        /// </summary>
+        /// <param name="returnUrl"></param>
+        /// <returns></returns>
         [HttpGet]
         [AllowAnonymous]
         public IActionResult Register(string returnUrl = null)
@@ -212,6 +279,12 @@ namespace TweetDotNet.Controllers
             return View();
         }
 
+        /// <summary>
+        /// Registering new users with their model information then return to page before registeration
+        /// </summary>
+        /// <param name="model">Model with registrar info</param>
+        /// <param name="returnUrl">Url redirection after regiseration is complete</param>
+        /// <returns></returns>
         [HttpPost]
         [AllowAnonymous]
         [ValidateAntiForgeryToken]
@@ -220,18 +293,30 @@ namespace TweetDotNet.Controllers
             ViewData["ReturnUrl"] = returnUrl;
             if (ModelState.IsValid)
             {
+                // Create new application user with Identity using the entered user email
                 var user = new ApplicationUser { UserName = model.Email, Email = model.Email };
+
+                // Checks if the email already exist or available to be taken
                 var result = await _userManager.CreateAsync(user, model.Password);
                 if (result.Succeeded)
                 {
                     _logger.LogInformation("User created a new account with password.");
 
+                    // Generating token info to confirm registration and prevent fraud
                     var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+
+                    // This is a callback method the token, code generaated 
+                    // and scheme to confirm request coming from the same computer/ip/device
                     var callbackUrl = Url.EmailConfirmationLink(user.Id, code, Request.Scheme);
+
+                    // Send the email confirmation to the registerar
                     await _emailSender.SendEmailConfirmationAsync(model.Email, callbackUrl);
 
+                    // once signed up successfully, Sign user in
                     await _signInManager.SignInAsync(user, isPersistent: false);
                     _logger.LogInformation("User created a new account with password.");
+
+                    // Return to page before registeration
                     return RedirectToLocal(returnUrl);
                 }
                 AddErrors(result);
@@ -241,6 +326,10 @@ namespace TweetDotNet.Controllers
             return View(model);
         }
 
+        /// <summary>
+        /// Logout method with redirection to Home controller main index page
+        /// </summary>
+        /// <returns></returns>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Logout()
@@ -250,6 +339,12 @@ namespace TweetDotNet.Controllers
             return RedirectToAction(nameof(HomeController.Index), "Home");
         }
 
+        /// <summary>
+        /// This method is used when login is required by third party application/website
+        /// </summary>
+        /// <param name="provider">Origin of account requesting login</param>
+        /// <param name="returnUrl"></param>
+        /// <returns></returns>
         [HttpPost]
         [AllowAnonymous]
         [ValidateAntiForgeryToken]
@@ -261,6 +356,12 @@ namespace TweetDotNet.Controllers
             return Challenge(properties, provider);
         }
 
+        /// <summary>
+        /// Callback method executed after external account has been authenticated successfully
+        /// </summary>
+        /// <param name="returnUrl"></param>
+        /// <param name="remoteError"></param>
+        /// <returns></returns>
         [HttpGet]
         [AllowAnonymous]
         public async Task<IActionResult> ExternalLoginCallback(string returnUrl = null, string remoteError = null)
@@ -399,6 +500,11 @@ namespace TweetDotNet.Controllers
             return View(model);
         }
 
+        /// <summary>
+        /// Reseting password by Model whether by Email or another form of identification
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
         [HttpPost]
         [AllowAnonymous]
         [ValidateAntiForgeryToken]
@@ -408,12 +514,16 @@ namespace TweetDotNet.Controllers
             {
                 return View(model);
             }
+
+            // checking if email exist in the datbase
             var user = await _userManager.FindByEmailAsync(model.Email);
             if (user == null)
             {
                 // Don't reveal that the user does not exist
                 return RedirectToAction(nameof(ResetPasswordConfirmation));
             }
+
+            // Checking user's password 
             var result = await _userManager.ResetPasswordAsync(user, model.Code, model.Password);
             if (result.Succeeded)
             {
@@ -423,6 +533,10 @@ namespace TweetDotNet.Controllers
             return View();
         }
 
+        /// <summary>
+        /// Reset password view returned when requested by reset
+        /// </summary>
+        /// <returns></returns>
         [HttpGet]
         [AllowAnonymous]
         public IActionResult ResetPasswordConfirmation()
