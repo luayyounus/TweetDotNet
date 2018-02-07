@@ -16,6 +16,7 @@ using TweetDotNet.Services;
 
 namespace TweetDotNet.Controllers
 {
+    // Require this class to use authentication to access data
     [Authorize]
     [Route("[controller]/[action]")]
     public class ManageController : Controller
@@ -24,11 +25,15 @@ namespace TweetDotNet.Controllers
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly IEmailSender _emailSender;
         private readonly ILogger _logger;
+
+        // using dependency injection to bring in Url encoder used for conversions, encoding, decoding ...etc
         private readonly UrlEncoder _urlEncoder;
 
+        // Secret key construction to be used with SHA and authentication 
         private const string AuthenticatorUriFormat = "otpauth://totp/{0}:{1}?secret={2}&issuer={0}&digits=6";
         private const string RecoveryCodesKey = nameof(RecoveryCodesKey);
 
+        // main constructor initializing the injected dependencies
         public ManageController(
           UserManager<ApplicationUser> userManager,
           SignInManager<ApplicationUser> signInManager,
