@@ -8,6 +8,12 @@ namespace TweetDotNet.Models.AccountViewModels
 {
     public class RegisterViewModel
     {
+        // Full name for user registeration with custom message
+        [Required]
+        [StringLength(50, ErrorMessage = "Max length is 50 characters.")]
+        [Display(Name = "Full Name")]
+        public string FullName { get; set; }
+
         // Email property for user registeration with custom message using data annotation
         [Required]
         [EmailAddress]
@@ -26,5 +32,11 @@ namespace TweetDotNet.Models.AccountViewModels
         [Display(Name = "Confirm password")]
         [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
         public string ConfirmPassword { get; set; }
+
+        [Display(Name = "Job Title")]
+        public string JobTitle { get; set; }
+
+        [Display(Name = "Years of Experience")]
+        public int YearsOfExperience { get; set; }
     }
 }

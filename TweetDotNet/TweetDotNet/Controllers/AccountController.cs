@@ -300,6 +300,9 @@ namespace TweetDotNet.Controllers
                 var result = await _userManager.CreateAsync(user, model.Password);
                 if (result.Succeeded)
                 {
+                    // Create a Claim for the Email Address
+                    Claim claim = new Claim(ClaimTypes.Email, model.Email, ClaimValueTypes.String);
+
                     _logger.LogInformation("User created a new account with password.");
 
                     // Generating token info to confirm registration and prevent fraud
