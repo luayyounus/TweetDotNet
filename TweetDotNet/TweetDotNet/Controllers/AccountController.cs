@@ -303,6 +303,8 @@ namespace TweetDotNet.Controllers
                     // Create a Claim for the Email Address
                     Claim fullnameClaim = new Claim(ClaimTypes.GivenName, model.FullName, ClaimValueTypes.String);
                     Claim emailClaim = new Claim(ClaimTypes.Email, model.Email, ClaimValueTypes.String);
+                    Claim countryCalim = new Claim(ClaimTypes.Country, model.Country, ClaimValueTypes.String);
+                    Claim dobClaim = new Claim(ClaimTypes.DateOfBirth, model.BirthDay.ToString(), ClaimValueTypes.String);
                     await _userManager.AddToRoleAsync(user, ApplicationRoles.Member);
 
                     List<Claim> memberClaims = new List<Claim> { fullnameClaim, emailClaim };
@@ -370,9 +372,11 @@ namespace TweetDotNet.Controllers
                     // Create a Claim for the Email Address
                     Claim fullnameClaim = new Claim(ClaimTypes.GivenName, model.FullName, ClaimValueTypes.String);
                     Claim emailClaim = new Claim(ClaimTypes.Email, model.Email, ClaimValueTypes.String);
+                    Claim countryCalim = new Claim(ClaimTypes.Country, model.Country, ClaimValueTypes.String);
+                    Claim dobClaim = new Claim(ClaimTypes.DateOfBirth, model.BirthDay.ToString(), ClaimValueTypes.String);
                     await _userManager.AddToRoleAsync(user, ApplicationRoles.Admin);
 
-                    List<Claim> adminClaims = new List<Claim> { fullnameClaim, emailClaim };
+                    List<Claim> adminClaims = new List<Claim> { fullnameClaim, emailClaim, countryCalim, dobClaim };
                     var claimsTask = await _userManager.AddClaimsAsync(user, adminClaims);
 
                     if (claimsTask.Succeeded)

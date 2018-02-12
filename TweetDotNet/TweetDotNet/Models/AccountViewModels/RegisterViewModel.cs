@@ -33,6 +33,15 @@ namespace TweetDotNet.Models.AccountViewModels
         [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
         public string ConfirmPassword { get; set; }
 
+        // User Birthday when registered
+        [DataType(DataType.Date)]
+        [Display(Name = "Birthday")]
+        public DateTime BirthDay { get; set; }
+
+        // User's country
+        [Display(Name = "Country")]
+        public string Country { get; set; }
+
         [Display(Name = "Job Title")]
         public string JobTitle { get; set; }
 
