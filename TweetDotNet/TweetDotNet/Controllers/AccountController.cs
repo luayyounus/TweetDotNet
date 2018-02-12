@@ -17,7 +17,7 @@ using TweetDotNet.Services;
 namespace TweetDotNet.Controllers
 {
     // Require this class to use authentication to access data
-    [Authorize]
+    [Authorize(Roles = ApplicationRoles.Member)]
     [Route("[controller]/[action]")]
     public class AccountController : Controller
     {
@@ -301,26 +301,34 @@ namespace TweetDotNet.Controllers
                 if (result.Succeeded)
                 {
                     // Create a Claim for the Email Address
-                    Claim claim = new Claim(ClaimTypes.Email, model.Email, ClaimValueTypes.String);
+                    Claim fullnameClaim = new Claim(ClaimTypes.GivenName, model.FullName, ClaimValueTypes.String);
+                    Claim emailClaim = new Claim(ClaimTypes.Email, model.Email, ClaimValueTypes.String);
+                    await _userManager.AddToRoleAsync(user, ApplicationRoles.Member);
 
-                    _logger.LogInformation("User created a new account with password.");
+                    List<Claim> memberClaims = new List<Claim> { fullnameClaim, emailClaim };
+                    var claimsTask = await _userManager.AddClaimsAsync(user, memberClaims);
 
-                    // Generating token info to confirm registration and prevent fraud
-                    var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                    if (claimsTask.Succeeded)
+                    {
+                        _logger.LogInformation("User created a new account with password.");
 
-                    // This is a callback method the token, code generaated 
-                    // and scheme to confirm request coming from the same computer/ip/device
-                    var callbackUrl = Url.EmailConfirmationLink(user.Id, code, Request.Scheme);
+                        // Generating token info to confirm registration and prevent fraud
+                        var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
 
-                    // Send the email confirmation to the registerar
-                    await _emailSender.SendEmailConfirmationAsync(model.Email, callbackUrl);
+                        // This is a callback method the token, code generaated 
+                        // and scheme to confirm request coming from the same computer/ip/device
+                        var callbackUrl = Url.EmailConfirmationLink(user.Id, code, Request.Scheme);
 
-                    // once signed up successfully, Sign user in
-                    await _signInManager.SignInAsync(user, isPersistent: false);
-                    _logger.LogInformation("User created a new account with password.");
+                        // Send the email confirmation to the registerar
+                        await _emailSender.SendEmailConfirmationAsync(model.Email, callbackUrl);
 
-                    // Return to page before registeration
-                    return RedirectToLocal(returnUrl);
+                        // once signed up successfully, Sign user in
+                        await _signInManager.SignInAsync(user, isPersistent: false);
+                        _logger.LogInformation("User created a new account with password.");
+
+                        // Return to page before registeration
+                        return RedirectToLocal(returnUrl);
+                    }
                 }
                 AddErrors(result);
             }
@@ -328,6 +336,74 @@ namespace TweetDotNet.Controllers
             // If we got this far, something failed, redisplay form
             return View(model);
         }
+
+        /// <summary>
+        /// This action is called to register new Admin 
+        /// </summary>
+        /// <param name="returnUrl"></param>
+        /// <returns></returns>
+        [HttpGet]
+        [Authorize(Roles = ApplicationRoles.Admin)]
+        [AllowAnonymous]
+        public IActionResult RegisterAdmin(string returnUrl = null)
+        {
+            ViewData["ReturnUrl"] = returnUrl;
+            return View();
+        }
+
+        [HttpPost]
+        [Authorize(Roles = ApplicationRoles.Admin)]
+        [AllowAnonymous]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RegisterAdmin(RegisterViewModel model, string returnUrl = null)
+        {
+            ViewData["ReturnUrl"] = returnUrl;
+            if (ModelState.IsValid)
+            {
+                // Create new application user with Identity using the entered user email
+                var user = new ApplicationUser { UserName = model.Email, Email = model.Email };
+
+                // Checks if the email already exist or available to be taken
+                var result = await _userManager.CreateAsync(user, model.Password);
+                if (result.Succeeded)
+                {
+                    // Create a Claim for the Email Address
+                    Claim fullnameClaim = new Claim(ClaimTypes.GivenName, model.FullName, ClaimValueTypes.String);
+                    Claim emailClaim = new Claim(ClaimTypes.Email, model.Email, ClaimValueTypes.String);
+                    await _userManager.AddToRoleAsync(user, ApplicationRoles.Admin);
+
+                    List<Claim> adminClaims = new List<Claim> { fullnameClaim, emailClaim };
+                    var claimsTask = await _userManager.AddClaimsAsync(user, adminClaims);
+
+                    if (claimsTask.Succeeded)
+                    {
+                        _logger.LogInformation("User created a new account with password.");
+
+                        // Generating token info to confirm registration and prevent fraud
+                        var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+
+                        // This is a callback method the token, code generaated 
+                        // and scheme to confirm request coming from the same computer/ip/device
+                        var callbackUrl = Url.EmailConfirmationLink(user.Id, code, Request.Scheme);
+
+                        // Send the email confirmation to the registerar
+                        await _emailSender.SendEmailConfirmationAsync(model.Email, callbackUrl);
+
+                        // once signed up successfully, Sign user in
+                        await _signInManager.SignInAsync(user, isPersistent: false);
+                        _logger.LogInformation("User created a new account with password.");
+
+                        // Return to page before registeration
+                        return RedirectToLocal(returnUrl);
+                    }
+                }
+                AddErrors(result);
+            }
+
+            // If we got this far, something failed, redisplay form
+            return View(model);
+        }
+
 
         /// <summary>
         /// Logout method with redirection to Home controller main index page

@@ -46,7 +46,7 @@ namespace TweetDotNet
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, RoleManager<IdentityRole> roleManager)
         {
             // checking if the app env is in developement
             if (env.IsDevelopment())
@@ -74,6 +74,15 @@ namespace TweetDotNet
                     name: "default",
                     template: "{controller=Home}/{action=Index}/{id?}");
             });
+
+            // Role Creation using role Manager to populate database
+            var roleCreator = roleManager.CreateAsync(
+                new IdentityRole
+                {
+                    Name = ApplicationRoles.Member,
+                    NormalizedName = ApplicationRoles.Member
+                });
+            roleCreator.Wait();
         }
     }
 }
