@@ -64,15 +64,6 @@ namespace TweetDotNet.Controllers
             return View();
         }
 
-        /// <summary>
-        /// Default Login mechanism provided by Identity framework with two overloads
-        /// </summary>
-        /// <param name="model">View model for login options</param>
-        /// <param name="returnUrl">Return url after logging in</param>
-        /// <returns></returns>
-        [HttpPost]
-        [AllowAnonymous]
-        
         // Validating the source of login by storing a token in cookies to prevent cyber/unauthorized attacks from data stealth.
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(LoginViewModel model, string returnUrl = null)
@@ -120,6 +111,110 @@ namespace TweetDotNet.Controllers
 
             // If we got this far, something failed, redisplay form
             return View(model);
+        }
+
+        /// <summary>
+        ///  Admin Login action that uses Identity 
+        /// </summary>
+        /// <param name="returnUrl">overload to return to same page before logging in</param>
+        /// <returns></returns>
+        [HttpGet]
+        [Authorize(Roles = ApplicationRoles.Admin)]
+        public async Task<IActionResult> LoginAdmin(string returnUrl = null)
+        {
+            // Clear the existing external cookie to ensure a clean login process
+            await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
+
+            ViewData["ReturnUrl"] = returnUrl;
+            return View();
+        }
+
+
+        // Validating the source of login by storing a token in cookies to prevent cyber/unauthorized attacks from data stealth.
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> LoginAdmin(LoginViewModel model, string returnUrl = null)
+        {
+            // Passing in the return url between view to keep persistency after login
+            ViewData["ReturnUrl"] = returnUrl;
+
+            // Checking if user has filled the form using the Model
+            if (ModelState.IsValid)
+            {
+                // This doesn't count login failures towards account lockout
+                // To enable password failures to trigger account lockout, set lockoutOnFailure: true
+                var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, lockoutOnFailure: false);
+
+                // If user has signed in successfully, the succeeded flag will be true
+                if (result.Succeeded)
+                {
+                    // Logging the user login details for future backlog reference
+                    _logger.LogInformation("User logged in.");
+
+                    // return to the view with the url specified earlier after login
+                    return RedirectToLocal(nameof(AddTweetBlog));
+                }
+
+                // checking if the user requires 2 factor authentication for login
+                if (result.RequiresTwoFactor)
+                {
+                    // Redirecting with action to the specifid controller using the full assembly directory with (nameof)
+                    return RedirectToAction(nameof(LoginWith2fa), new { returnUrl, model.RememberMe });
+                }
+
+                // checking if user has done enough attempts and blocks their account
+                if (result.IsLockedOut)
+                {
+                    _logger.LogWarning("User account locked out.");
+                    return RedirectToAction(nameof(Lockout));
+                }
+                else
+                {
+                    // return the current model if the user has made an invalid login attempt
+                    ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+                    return View(model);
+                }
+            }
+
+            // If we got this far, something failed, redisplay form
+            return View(model);
+        }
+
+
+
+        [HttpGet]
+        [Authorize(Roles = ApplicationRoles.Admin)]
+        public IActionResult AddTweetBlog()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        [Authorize(Roles = ApplicationRoles.Admin)]
+        public async Task<IActionResult> AddTweetBlog(TweetBlog model, string returnUrl = null)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            await 
+
+            //if (result.Succeeded)
+            //{
+            //    _logger.LogInformation("User with ID {UserId} logged in with a recovery code.", user.Id);
+            //    return RedirectToLocal(returnUrl);
+            //}
+            //if (result.IsLockedOut)
+            //{
+            //    _logger.LogWarning("User with ID {UserId} account locked out.", user.Id);
+            //    return RedirectToAction(nameof(Lockout));
+            //}
+            //else
+            //{
+            //    _logger.LogWarning("Invalid recovery code entered for user with ID {UserId}", user.Id);
+            //    ModelState.AddModelError(string.Empty, "Invalid recovery code entered.");
+            //    return View();
+            //}
         }
 
         /// <summary>
@@ -398,7 +493,7 @@ namespace TweetDotNet.Controllers
                         _logger.LogInformation("User created a new account with password.");
 
                         // Return to page before registeration
-                        return RedirectToLocal(returnUrl);
+                        return RedirectToAction(nameof(LoginAdmin));
                     }
                 }
                 AddErrors(result);
