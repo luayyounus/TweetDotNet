@@ -38,6 +38,12 @@ namespace TweetDotNet
                 .AddEntityFrameworkStores<ApplicationDbContext>()
                 .AddDefaultTokenProviders();
 
+            // Add policy for account
+            services.AddAuthorization(options =>
+            {
+                options.AddPolicy("AccountRequired", policy => policy.RequireRole("Member", "Admin").Build());
+            });
+
             // Add application services.
             services.AddTransient<IEmailSender, EmailSender>();
 
@@ -76,13 +82,31 @@ namespace TweetDotNet
             });
 
             // Role Creation using role Manager to populate database
-            var roleCreator = roleManager.CreateAsync(
+            var checkMember = roleManager.RoleExistsAsync(ApplicationRoles.Member);
+            checkMember.Wait();
+            if (!checkMember.Result)
+            {
+                var member = roleManager.CreateAsync(
                 new IdentityRole
                 {
                     Name = ApplicationRoles.Member,
                     NormalizedName = ApplicationRoles.Member
                 });
-            roleCreator.Wait();
+                member.Wait();
+            }
+
+            var checkAdmin = roleManager.RoleExistsAsync(ApplicationRoles.Admin);
+            checkAdmin.Wait();
+            if (!checkAdmin.Result)
+            {
+                var admin = roleManager.CreateAsync(
+                new IdentityRole
+                {
+                    Name = ApplicationRoles.Admin,
+                    NormalizedName = ApplicationRoles.Admin
+                });
+                admin.Wait();
+            }
         }
     }
 }
