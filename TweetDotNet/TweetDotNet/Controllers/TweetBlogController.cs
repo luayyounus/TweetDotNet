@@ -27,6 +27,13 @@ namespace TweetDotNet.Controllers
             return View(await _context.TweetBlogs.ToListAsync());
         }
 
+        [HttpGet]
+        [Authorize(Policy = "MinimumAge")]
+        public async Task<IActionResult> GetAdvancedTopics()
+        {
+            return View(await _context.TweetBlogs.Where(x => x.LevelAdvanced == true).ToListAsync());
+        }
+
         // GET: TweetBlog/Details/5
         public async Task<IActionResult> Details(int? id)
         {
