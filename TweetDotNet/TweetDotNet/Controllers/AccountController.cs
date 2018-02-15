@@ -17,7 +17,6 @@ using TweetDotNet.Services;
 namespace TweetDotNet.Controllers
 {
     // Require this class to use authentication to access data
-    [Authorize(Policy = "AccountRequired")]
     [Route("[controller]/[action]")]
     public class AccountController : Controller
     {
@@ -65,6 +64,7 @@ namespace TweetDotNet.Controllers
         }
 
         // Validating the source of login by storing a token in cookies to prevent cyber/unauthorized attacks from data stealth.
+        [AllowAnonymous]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(LoginViewModel model, string returnUrl = null)
         {
@@ -85,56 +85,7 @@ namespace TweetDotNet.Controllers
                     _logger.LogInformation("User logged in.");
 
                     // return to the view with the url specified earlier after login
-                    return RedirectToLocal(returnUrl);
-                }
-
-                // checking if the user requires 2 factor authentication for login
-                if (result.RequiresTwoFactor)
-                {
-                    // Redirecting with action to the specifid controller using the full assembly directory with (nameof)
-                    return RedirectToAction(nameof(LoginWith2fa), new { returnUrl, model.RememberMe });
-                }
-
-                // checking if user has done enough attempts and blocks their account
-                if (result.IsLockedOut)
-                {
-                    _logger.LogWarning("User account locked out.");
-                    return RedirectToAction(nameof(Lockout));
-                }
-                else
-                {
-                    // return the current model if the user has made an invalid login attempt
-                    ModelState.AddModelError(string.Empty, "Invalid login attempt.");
-                    return View(model);
-                }
-            }
-
-            // If we got this far, something failed, redisplay form
-            return View(model);
-        }
-
-        // Validating the source of login by storing a token in cookies to prevent cyber/unauthorized attacks from data stealth.
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> LoginAdmin(LoginViewModel model, string returnUrl = null)
-        {
-            // Passing in the return url between view to keep persistency after login
-            ViewData["ReturnUrl"] = returnUrl;
-
-            // Checking if user has filled the form using the Model
-            if (ModelState.IsValid)
-            {
-                // This doesn't count login failures towards account lockout
-                // To enable password failures to trigger account lockout, set lockoutOnFailure: true
-                var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, lockoutOnFailure: false);
-
-                // If user has signed in successfully, the succeeded flag will be true
-                if (result.Succeeded)
-                {
-                    // Logging the user login details for future backlog reference
-                    _logger.LogInformation("User logged in.");
-
-                    // return to the view with the url specified earlier after login
-                    return RedirectToLocal(returnUrl);
+                    return RedirectToAction("Index", "TweetBlog");
                 }
 
                 // checking if the user requires 2 factor authentication for login
@@ -369,7 +320,7 @@ namespace TweetDotNet.Controllers
                         _logger.LogInformation("User created a new account with password.");
 
                         // Return to page before registeration
-                        return RedirectToLocal(returnUrl);
+                        return RedirectToAction("Index", "TweetBlog");
                     }
                 }
                 AddErrors(result);
@@ -436,7 +387,7 @@ namespace TweetDotNet.Controllers
                         _logger.LogInformation("User created a new account with password.");
 
                         // Return to page before registeration
-                        return RedirectToAction(nameof(LoginAdmin));
+                        return RedirectToAction("Index", "TweetBlog");
                     }
                 }
                 AddErrors(result);

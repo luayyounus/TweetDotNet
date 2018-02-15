@@ -82,31 +82,18 @@ namespace TweetDotNet
             });
 
             // Role Creation using role Manager to populate database
-            var checkMember = roleManager.RoleExistsAsync(ApplicationRoles.Member);
-            checkMember.Wait();
-            if (!checkMember.Result)
-            {
-                var member = roleManager.CreateAsync(
-                new IdentityRole
-                {
-                    Name = ApplicationRoles.Member,
-                    NormalizedName = ApplicationRoles.Member
-                });
-                member.Wait();
-            }
-
-            var checkAdmin = roleManager.RoleExistsAsync(ApplicationRoles.Admin);
-            checkAdmin.Wait();
-            if (!checkAdmin.Result)
-            {
-                var admin = roleManager.CreateAsync(
-                new IdentityRole
-                {
-                    Name = ApplicationRoles.Admin,
-                    NormalizedName = ApplicationRoles.Admin
-                });
-                admin.Wait();
-            }
+            //roleManager.CreateAsync(
+            //    new IdentityRole
+            //    {
+            //        Name = ApplicationRoles.Member,
+            //        NormalizedName = ApplicationRoles.Member
+            //    }).Wait();
+            //roleManager.CreateAsync(
+            //  new IdentityRole
+            //  {
+            //      Name = ApplicationRoles.Admin,
+            //      NormalizedName = ApplicationRoles.Admin
+            //  }).Wait();
         }
     }
 }
