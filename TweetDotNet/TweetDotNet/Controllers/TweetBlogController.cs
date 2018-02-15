@@ -29,7 +29,7 @@ namespace TweetDotNet.Controllers
 
         [HttpGet]
         [Authorize(Policy = "MinimumAge")]
-        public async Task<IActionResult> GetAdvancedTopics()
+        public async Task<IActionResult> AdvancedTopics()
         {
             return View(await _context.TweetBlogs.Where(x => x.LevelAdvanced == true).ToListAsync());
         }
