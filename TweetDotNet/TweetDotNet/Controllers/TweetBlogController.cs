@@ -67,7 +67,8 @@ namespace TweetDotNet.Controllers
             return View(tweetBlog);
         }
 
-        // GET: TweetBlog/Edit/5
+        [HttpGet]
+        [Authorize(Roles = ApplicationRoles.Admin)]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
