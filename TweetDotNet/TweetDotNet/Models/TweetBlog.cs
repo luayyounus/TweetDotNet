@@ -12,5 +12,7 @@ namespace TweetDotNet.Models
         public string HeadLine { get; set; }
         public DateTime DateCreated { get; set; }
         public string Content { get; set; }
+        public bool LevelBeginner { get; set; }
+        public bool LevelAdvanced { get; set; }
     }
 }

@@ -11,6 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 using TweetDotNet.Data;
 using TweetDotNet.Models;
 using TweetDotNet.Services;
+using Microsoft.AspNetCore.Authorization;
 
 namespace TweetDotNet
 {
@@ -42,7 +43,11 @@ namespace TweetDotNet
             services.AddAuthorization(options =>
             {
                 options.AddPolicy("AccountRequired", policy => policy.RequireRole("Member", "Admin").Build());
+                options.AddPolicy("MinimumAge", policy => policy.Requirements.Add(new MinimumAgeRequirement()));
             });
+
+            // Add Custom policy to be instantiated once with Singleton
+            services.AddSingleton<IAuthorizationHandler, Is12>();
 
             // Add application services.
             services.AddTransient<IEmailSender, EmailSender>();
