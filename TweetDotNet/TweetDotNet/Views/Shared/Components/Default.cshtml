@@ -1,0 +1,6 @@
+﻿@model IEnumerable<TweetBlog>
+
+@foreach(var item in Model)
+{
+    <a href="/TweetBlog/@item.Id">@item.Title</a>
+}

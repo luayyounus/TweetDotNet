@@ -17,7 +17,6 @@ using TweetDotNet.Services;
 namespace TweetDotNet.Controllers
 {
     // Require this class to use authentication to access data
-    [Authorize]
     [Route("[controller]/[action]")]
     public class AccountController : Controller
     {
@@ -64,16 +63,8 @@ namespace TweetDotNet.Controllers
             return View();
         }
 
-        /// <summary>
-        /// Default Login mechanism provided by Identity framework with two overloads
-        /// </summary>
-        /// <param name="model">View model for login options</param>
-        /// <param name="returnUrl">Return url after logging in</param>
-        /// <returns></returns>
-        [HttpPost]
-        [AllowAnonymous]
-        
         // Validating the source of login by storing a token in cookies to prevent cyber/unauthorized attacks from data stealth.
+        [AllowAnonymous]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(LoginViewModel model, string returnUrl = null)
         {
@@ -94,7 +85,7 @@ namespace TweetDotNet.Controllers
                     _logger.LogInformation("User logged in.");
 
                     // return to the view with the url specified earlier after login
-                    return RedirectToLocal(returnUrl);
+                    return RedirectToAction("Index", "TweetBlog");
                 }
 
                 // checking if the user requires 2 factor authentication for login
@@ -300,24 +291,37 @@ namespace TweetDotNet.Controllers
                 var result = await _userManager.CreateAsync(user, model.Password);
                 if (result.Succeeded)
                 {
-                    _logger.LogInformation("User created a new account with password.");
+                    // Create a Claim for the Email Address
+                    Claim fullnameClaim = new Claim(ClaimTypes.GivenName, model.FullName, ClaimValueTypes.String);
+                    Claim emailClaim = new Claim(ClaimTypes.Email, model.Email, ClaimValueTypes.String);
+                    Claim countryCalim = new Claim(ClaimTypes.Country, model.Country, ClaimValueTypes.String);
+                    Claim dobClaim = new Claim(ClaimTypes.DateOfBirth, model.BirthDay.ToString(), ClaimValueTypes.String);
+                    await _userManager.AddToRoleAsync(user, ApplicationRoles.Member);
 
-                    // Generating token info to confirm registration and prevent fraud
-                    var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                    List<Claim> memberClaims = new List<Claim> { fullnameClaim, emailClaim };
+                    var claimsTask = await _userManager.AddClaimsAsync(user, memberClaims);
 
-                    // This is a callback method the token, code generaated 
-                    // and scheme to confirm request coming from the same computer/ip/device
-                    var callbackUrl = Url.EmailConfirmationLink(user.Id, code, Request.Scheme);
+                    if (claimsTask.Succeeded)
+                    {
+                        _logger.LogInformation("User created a new account with password.");
 
-                    // Send the email confirmation to the registerar
-                    await _emailSender.SendEmailConfirmationAsync(model.Email, callbackUrl);
+                        // Generating token info to confirm registration and prevent fraud
+                        var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
 
-                    // once signed up successfully, Sign user in
-                    await _signInManager.SignInAsync(user, isPersistent: false);
-                    _logger.LogInformation("User created a new account with password.");
+                        // This is a callback method the token, code generaated 
+                        // and scheme to confirm request coming from the same computer/ip/device
+                        var callbackUrl = Url.EmailConfirmationLink(user.Id, code, Request.Scheme);
 
-                    // Return to page before registeration
-                    return RedirectToLocal(returnUrl);
+                        // Send the email confirmation to the registerar
+                        await _emailSender.SendEmailConfirmationAsync(model.Email, callbackUrl);
+
+                        // once signed up successfully, Sign user in
+                        await _signInManager.SignInAsync(user, isPersistent: false);
+                        _logger.LogInformation("User created a new account with password.");
+
+                        // Return to page before registeration
+                        return RedirectToAction("Index", "TweetBlog");
+                    }
                 }
                 AddErrors(result);
             }
@@ -325,6 +329,74 @@ namespace TweetDotNet.Controllers
             // If we got this far, something failed, redisplay form
             return View(model);
         }
+
+        /// <summary>
+        /// This action is called to register new Admin 
+        /// </summary>
+        /// <param name="returnUrl"></param>
+        /// <returns></returns>
+        [HttpGet]
+        [AllowAnonymous]
+        public IActionResult RegisterAdmin(string returnUrl = null)
+        {
+            ViewData["ReturnUrl"] = returnUrl;
+            return View();
+        }
+
+        [HttpPost]
+        [AllowAnonymous]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RegisterAdmin(RegisterViewModel model, string returnUrl = null)
+        {
+            ViewData["ReturnUrl"] = returnUrl;
+            if (ModelState.IsValid)
+            {
+                // Create new application user with Identity using the entered user email
+                var user = new ApplicationUser { UserName = model.Email, Email = model.Email };
+
+                // Checks if the email already exist or available to be taken
+                var result = await _userManager.CreateAsync(user, model.Password);
+                if (result.Succeeded)
+                {
+                    // Create a Claim for the Email Address
+                    Claim fullnameClaim = new Claim(ClaimTypes.GivenName, model.FullName, ClaimValueTypes.String);
+                    Claim emailClaim = new Claim(ClaimTypes.Email, model.Email, ClaimValueTypes.String);
+                    Claim countryCalim = new Claim(ClaimTypes.Country, model.Country, ClaimValueTypes.String);
+                    Claim dobClaim = new Claim(ClaimTypes.DateOfBirth, model.BirthDay.ToString(), ClaimValueTypes.String);
+                    await _userManager.AddToRoleAsync(user, ApplicationRoles.Admin);
+
+                    List<Claim> adminClaims = new List<Claim> { fullnameClaim, emailClaim, countryCalim, dobClaim };
+                    var claimsTask = await _userManager.AddClaimsAsync(user, adminClaims);
+
+                    if (claimsTask.Succeeded)
+                    {
+                        _logger.LogInformation("User created a new account with password.");
+
+                        // Generating token info to confirm registration and prevent fraud
+                        var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+
+                        // This is a callback method the token, code generaated 
+                        // and scheme to confirm request coming from the same computer/ip/device
+                        var callbackUrl = Url.EmailConfirmationLink(user.Id, code, Request.Scheme);
+
+                        // Send the email confirmation to the registerar
+                        await _emailSender.SendEmailConfirmationAsync(model.Email, callbackUrl);
+
+                        // once signed up successfully, Sign user in
+                        await _signInManager.SignInAsync(user, isPersistent: false);
+                        _logger.LogInformation("User created a new account with password.");
+
+                        // Return to page before registeration
+                        return RedirectToAction("Index", "TweetBlog");
+                    }
+                }
+                AddErrors(result);
+            }
+
+            // If we got this far, something failed, redisplay form
+            return View(model);
+        }
+
 
         /// <summary>
         /// Logout method with redirection to Home controller main index page

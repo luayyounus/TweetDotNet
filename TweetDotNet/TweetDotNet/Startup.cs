@@ -11,6 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 using TweetDotNet.Data;
 using TweetDotNet.Models;
 using TweetDotNet.Services;
+using Microsoft.AspNetCore.Authorization;
 
 namespace TweetDotNet
 {
@@ -38,6 +39,19 @@ namespace TweetDotNet
                 .AddEntityFrameworkStores<ApplicationDbContext>()
                 .AddDefaultTokenProviders();
 
+            // Add TweetBlog interface for View Component
+            services.AddTransient<ITweetBlogService, TweetBlogService>();
+
+            // Add policy for account
+            services.AddAuthorization(options =>
+            {
+                options.AddPolicy("AccountRequired", policy => policy.RequireRole("Member", "Admin").Build());
+                options.AddPolicy("MinimumAge", policy => policy.Requirements.Add(new MinimumAgeRequirement()));
+            });
+
+            // Add Custom policy to be instantiated once with Singleton
+            services.AddSingleton<IAuthorizationHandler, Is12>();
+
             // Add application services.
             services.AddTransient<IEmailSender, EmailSender>();
 
@@ -46,7 +60,7 @@ namespace TweetDotNet
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, RoleManager<IdentityRole> roleManager)
         {
             // checking if the app env is in developement
             if (env.IsDevelopment())
@@ -74,6 +88,20 @@ namespace TweetDotNet
                     name: "default",
                     template: "{controller=Home}/{action=Index}/{id?}");
             });
+
+            // Role Creation using role Manager to populate database
+            //roleManager.CreateAsync(
+            //    new IdentityRole
+            //    {
+            //        Name = ApplicationRoles.Member,
+            //        NormalizedName = ApplicationRoles.Member
+            //    }).Wait();
+            //roleManager.CreateAsync(
+            //  new IdentityRole
+            //  {
+            //      Name = ApplicationRoles.Admin,
+            //      NormalizedName = ApplicationRoles.Admin
+            //  }).Wait();
         }
     }
 }
