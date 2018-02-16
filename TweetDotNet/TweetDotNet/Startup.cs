@@ -39,6 +39,9 @@ namespace TweetDotNet
                 .AddEntityFrameworkStores<ApplicationDbContext>()
                 .AddDefaultTokenProviders();
 
+            // Add TweetBlog interface for View Component
+            services.AddTransient<ITweetBlogService, TweetBlogService>();
+
             // Add policy for account
             services.AddAuthorization(options =>
             {
