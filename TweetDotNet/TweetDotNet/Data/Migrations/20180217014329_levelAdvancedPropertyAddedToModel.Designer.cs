@@ -11,9 +11,10 @@ using TweetDotNet.Data;
 namespace TweetDotNet.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20180217014329_levelAdvancedPropertyAddedToModel")]
+    partial class levelAdvancedPropertyAddedToModel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
